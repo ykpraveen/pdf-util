@@ -1,12 +1,26 @@
-import { computed, ref } from 'vue'
+import { ref } from 'vue'
 import { defineStore } from 'pinia'
 
 export const useFileStore = defineStore('files', () => {
   const files = ref<File[]>([])
-  const hasPdf = computed(() => files.value.some((file) => file.type === 'application/pdf'))
+  const results = ref<File[]>([])
 
-  function addFiles(incoming: File[]) { files.value = [...files.value, ...incoming] }
-  function clearFiles() { files.value = [] }
+  function addFiles(incoming: File[]) {
+    results.value = []
+    files.value = [...files.value, ...incoming]
+  }
 
-  return { files, hasPdf, addFiles, clearFiles }
+  function publishResults(incoming: File[]) {
+    results.value = incoming
+    files.value = incoming
+  }
+
+  function clearResults() { results.value = [] }
+
+  function clearFiles() {
+    files.value = []
+    results.value = []
+  }
+
+  return { files, results, addFiles, publishResults, clearResults, clearFiles }
 })

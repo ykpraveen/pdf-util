@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { RouterLink } from 'vue-router'
-import { ArrowRight, FileArchive, FileImage, FileKey, Files, ScanText, Scissors, Sparkles } from '@lucide/vue'
+import { ArrowRight, FileArchive, FileImage, FileKey, Files, ScanText, Scissors, ShieldCheck, Sparkles } from '@lucide/vue'
 
 const tools = [
   { label: 'Merge PDFs', description: 'Combine multiple documents into one.', path: '/merge', icon: Files, color: 'coral' },
@@ -8,7 +8,9 @@ const tools = [
   { label: 'Organize pages', description: 'Reorder, rotate, or remove pages.', path: '/organize', icon: Files, color: 'blue' },
   { label: 'Compress PDF', description: 'Make files smaller for sharing.', path: '/compress', icon: FileArchive, color: 'green' },
   { label: 'PDF to image', description: 'Turn pages into PNG or JPEG files.', path: '/pdf-to-image', icon: FileImage, color: 'lavender' },
+  { label: 'Image to PDF', description: 'Build a new PDF from your photos and scans.', path: '/image-to-pdf', icon: FileImage, color: 'lavender' },
   { label: 'Protect a PDF', description: 'Set or remove a document password.', path: '/password/set', icon: FileKey, color: 'pink' },
+  { label: 'Watermark', description: 'Stamp a text mark across selected pages.', path: '/watermark', icon: ShieldCheck, color: 'amber' },
   { label: 'OCR scanned pages', description: 'Make scanned documents searchable.', path: '/ocr', icon: ScanText, color: 'mint' },
   { label: 'Summarize', description: 'Pull out key points, fully offline.', path: '/summary', icon: Sparkles, color: 'peach' },
 ]

@@ -13,7 +13,6 @@
     "test": "vitest run"
   },
   "dependencies": {
-    "@headlessui/vue": "^1.7.23",
     "@lucide/vue": "^1.47.0",
     "pdf-lib": "^1.17.1",
     "pdfjs-dist": "^6.3.289",
