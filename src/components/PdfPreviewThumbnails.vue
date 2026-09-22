@@ -3,6 +3,7 @@ import { onBeforeUnmount, ref, watch } from 'vue'
 import { FileWarning, LoaderCircle } from '@lucide/vue'
 import { loadPdfJsDoc } from '../lib/pdf'
 import { renderPdfPage } from '../lib/pdf/render'
+import { useI18n } from '../i18n'
 
 type Thumbnail = {
   pageNumber: number
@@ -27,6 +28,7 @@ const thumbnails = ref<Thumbnail[]>([])
 const isLoading = ref(false)
 const error = ref<string | null>(null)
 let renderRequest = 0
+const { t } = useI18n()
 
 watch(() => [props.file, props.scale] as const, renderThumbnails, { immediate: true })
 
@@ -67,7 +69,7 @@ async function renderThumbnails(): Promise<void> {
       await pdf.cleanup()
     }
   } catch (cause) {
-    if (request === renderRequest) error.value = cause instanceof Error ? cause.message : 'Unable to preview this PDF.'
+    if (request === renderRequest) error.value = cause instanceof Error ? cause.message : t('errors.preview')
   } finally {
     if (request === renderRequest) isLoading.value = false
   }
@@ -77,11 +79,11 @@ onBeforeUnmount(() => { renderRequest += 1 })
 </script>
 
 <template>
-  <div class="pdf-thumbnails" role="region" aria-label="PDF page previews">
-    <div v-if="isLoading" class="component-state"><LoaderCircle class="spin" :size="18" /> Loading pages</div>
+  <div class="pdf-thumbnails" role="region" :aria-label="t('preview.title')">
+    <div v-if="isLoading" class="component-state"><LoaderCircle class="spin" :size="18" aria-hidden="true" /> {{ t('preview.loading') }}</div>
     <div v-else-if="error" class="component-state component-state-error"><FileWarning :size="18" /> {{ error }}</div>
-    <p v-else-if="!file" class="component-state">Choose a PDF to preview its pages.</p>
-    <p v-else-if="!thumbnails.length" class="component-state">This PDF has no pages.</p>
+    <p v-else-if="!file" class="component-state">{{ t('preview.choose') }}</p>
+    <p v-else-if="!thumbnails.length" class="component-state">{{ t('preview.empty') }}</p>
     <div v-else class="thumbnail-grid">
       <button
         v-for="thumbnail in thumbnails"
@@ -89,7 +91,7 @@ onBeforeUnmount(() => { renderRequest += 1 })
         type="button"
         class="thumbnail-button"
         :class="{ 'thumbnail-button-selected': selectedPage === thumbnail.pageNumber - 1 }"
-        :aria-label="`Select page ${thumbnail.pageNumber}`"
+        :aria-label="t('preview.select', { page: thumbnail.pageNumber })"
         :aria-pressed="selectedPage === thumbnail.pageNumber - 1"
         @click="emit('select', thumbnail.pageNumber - 1)"
       >

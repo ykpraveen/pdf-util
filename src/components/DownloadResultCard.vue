@@ -1,13 +1,15 @@
 <script setup lang="ts">
 import { Download, FileCheck2 } from '@lucide/vue'
+import { useI18n } from '../i18n'
 
 const props = withDefaults(defineProps<{
   file: Blob
   filename: string
   label?: string
 }>(), {
-  label: 'Your file is ready',
+  label: '',
 })
+const { t } = useI18n()
 
 function downloadFile(): void {
   const url = URL.createObjectURL(props.file)
@@ -26,8 +28,8 @@ function formatSize(bytes: number): string {
 </script>
 
 <template>
-  <section class="download-result" aria-label="Download result">
-    <div class="download-result-copy"><span class="download-result-icon"><FileCheck2 :size="19" /></span><div><strong>{{ label }}</strong><p>{{ filename }} · {{ formatSize(file.size) }}</p></div></div>
-    <button type="button" class="button button-primary" @click="downloadFile"><Download :size="16" /> Download</button>
+  <section class="download-result" :aria-label="t('download.result')">
+    <div class="download-result-copy"><span class="download-result-icon"><FileCheck2 :size="19" aria-hidden="true" /></span><div><strong>{{ label || t('download.ready') }}</strong><p>{{ filename }} · {{ formatSize(file.size) }}</p></div></div>
+    <button type="button" class="button button-primary" :aria-label="`${t('download.download')} ${filename}`" @click="downloadFile"><Download :size="16" aria-hidden="true" /> {{ t('download.download') }}</button>
   </section>
 </template>

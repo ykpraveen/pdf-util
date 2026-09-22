@@ -19,7 +19,7 @@ const percentage = computed(() => Math.max(0, Math.min(100, props.value)))
 
 <template>
   <div class="progress-indicator" role="status" aria-live="polite" aria-atomic="true">
-    <div class="progress-copy"><span><LoaderCircle class="spin" :size="15" /> {{ label }}</span><output v-if="!indeterminate">{{ percentage }}%</output></div>
+    <div class="progress-copy"><span><LoaderCircle class="spin" :size="15" aria-hidden="true" /> {{ label }}</span><output v-if="!indeterminate">{{ percentage }}%</output></div>
     <progress class="progress-track" :class="{ 'progress-track-indeterminate': indeterminate }" :value="indeterminate ? undefined : percentage" max="100" :aria-label="label" />
     <p v-if="detail" class="progress-detail">{{ detail }}</p>
   </div>
