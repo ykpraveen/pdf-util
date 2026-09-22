@@ -10,10 +10,8 @@ import ToolOutput from '../components/ToolOutput.vue'
 import { useFileStore } from '../stores/files'
 import {
   addWatermark,
-  compressPdf,
   imagesToPdf,
   loadPdf,
-  mergePdfs,
   pdfToImages,
   removePassword,
   reorderDeletePages,
@@ -22,8 +20,8 @@ import {
   splitPdf,
   type PageRange,
 } from '../lib/pdf'
-import { ocrPdf } from '../lib/ocr'
 import { extractText, summarize } from '../lib/summary'
+import { compressPdfInWorker, mergePdfsInWorker, ocrPdfInWorker } from '../workers/heavy.client'
 import { useI18n } from '../i18n'
 
 const descriptionKeys: Record<string, string> = {
@@ -63,6 +61,7 @@ const summaryText = ref('')
 const ocrText = ref('')
 const isProcessing = ref(false)
 const progress = ref(0)
+const progressDetail = ref('')
 const error = ref<string | null>(null)
 const results = computed(() => fileStore.results)
 
@@ -110,7 +109,17 @@ function clearOutput(): void {
   fileStore.clearResults()
   summaryText.value = ''
   ocrText.value = ''
+  progressDetail.value = ''
   error.value = null
+}
+
+function updateHeavyProgress(completed: number, total: number): void {
+  if (total <= 0) return
+  progress.value = 10 + Math.round((completed / total) * 85)
+  progressDetail.value = t(tool.value === 'Merge PDFs' ? 'output.fileProgress' : 'output.pageProgress', {
+    completed,
+    total,
+  })
 }
 
 function requirePdf(message: string): File {
@@ -120,7 +129,7 @@ function requirePdf(message: string): File {
 
 async function processMerge(): Promise<void> {
   if (pdfFiles.value.length < 2) throw new Error(t('errors.mergeCount'))
-  publishResult(await mergePdfs(pdfFiles.value), 'merged.pdf')
+  publishResult(await mergePdfsInWorker(pdfFiles.value, updateHeavyProgress), 'merged.pdf')
 }
 
 async function processSplit(): Promise<void> {
@@ -152,7 +161,7 @@ async function processOrganize(): Promise<void> {
 }
 
 async function processCompress(): Promise<void> {
-  publishResult(await compressPdf(requirePdf(t('errors.compressFile')), { quality: compressionQuality.value, maxDimension: compressionDimension.value }), 'compressed.pdf')
+  publishResult(await compressPdfInWorker(requirePdf(t('errors.compressFile')), { quality: compressionQuality.value, maxDimension: compressionDimension.value }, updateHeavyProgress), 'compressed.pdf')
 }
 
 async function processPdfToImage(): Promise<void> {
@@ -170,7 +179,7 @@ async function processWatermark(): Promise<void> {
 }
 
 async function processOcr(): Promise<void> {
-  const pages = await ocrPdf(requirePdf(t('errors.ocrFile')))
+  const pages = await ocrPdfInWorker(requirePdf(t('errors.ocrFile')), 'eng', updateHeavyProgress)
   ocrText.value = pages.map((page) => `Page ${page.pageNumber}\n${page.text}`).join('\n\n')
   fileStore.publishResults([new File([ocrText.value], 'ocr.txt', { type: 'text/plain' })])
 }
@@ -239,7 +248,7 @@ function selectPage(index: number): void {
         v-model:summary-sentence-count="summarySentenceCount"
         :tool="tool"
       />
-      <ToolOutput :tool="tool" :is-processing="isProcessing" :progress="progress" :error="error" :file-count="fileStore.files.length" :summary-text="summaryText" :ocr-text="ocrText" :results="results" @process="processTool" />
+      <ToolOutput :tool="tool" :is-processing="isProcessing" :progress="progress" :progress-detail="progressDetail" :error="error" :file-count="fileStore.files.length" :summary-text="summaryText" :ocr-text="ocrText" :results="results" @process="processTool" />
     </div>
     <p class="tool-note">{{ t('tool.note') }}</p>
   </section>

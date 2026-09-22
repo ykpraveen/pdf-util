@@ -15,6 +15,7 @@ defineProps<{
   tool: string
   isProcessing: boolean
   progress: number
+  progressDetail: string
   error: string | null
   fileCount: number
   summaryText: string
@@ -28,7 +29,7 @@ defineEmits<{
 </script>
 
 <template>
-  <ProgressIndicator v-if="isProcessing" :value="progress" :label="t('output.processing', { tool: t(`tools.${toolKeys[tool] ?? tool}.label`) })" />
+  <ProgressIndicator v-if="isProcessing" :value="progress" :label="t('output.processing', { tool: t(`tools.${toolKeys[tool] ?? tool}.label`) })" :detail="progressDetail" />
   <p v-if="error" id="tool-error" class="tool-error" role="alert">{{ error }}</p>
   <div class="next-step">
     <div role="status" aria-live="polite"><CheckCircle2 :size="17" aria-hidden="true" /><span>{{ fileCount ? t('nav.filesReadyShort', { count: fileCount }) : t('output.ready') }}</span></div>

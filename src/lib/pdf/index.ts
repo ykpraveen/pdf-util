@@ -1,6 +1,7 @@
 import { PDFDocument, StandardFonts, degrees, rgb } from 'pdf-lib'
 import type { PDFImage } from 'pdf-lib'
 import type { PDFDocumentProxy } from 'pdfjs-dist'
+import { normalizeCompressionOptions } from './compression'
 import { renderPdfPage } from './render'
 
 export type PageRange = {
@@ -325,15 +326,7 @@ async function embedImage(doc: PDFDocument, file: File): Promise<PDFImage> {
 }
 
 export async function compressPdf(file: File, options: CompressOptions = {}): Promise<Uint8Array> {
-  const { quality = 0.72, maxDimension = 1600 } = options
-
-  if (!Number.isFinite(quality) || quality <= 0 || quality > 1) {
-    throw new Error('Compression quality must be greater than zero and at most one.')
-  }
-
-  if (!Number.isFinite(maxDimension) || maxDimension <= 0) {
-    throw new Error('Compression maximum dimension must be greater than zero.')
-  }
+  const { quality, maxDimension } = normalizeCompressionOptions(options)
 
   const sourceBytes = new Uint8Array(await file.arrayBuffer())
   const source = await loadPdfJsDoc(file)

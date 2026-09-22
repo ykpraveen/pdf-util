@@ -89,6 +89,8 @@ const messages: Record<Locale, Messages> = {
     'preview.empty': 'This PDF has no pages.',
     'preview.select': 'Select page {page}',
     'output.processing': 'Processing {tool}',
+    'output.fileProgress': 'File {completed} of {total}',
+    'output.pageProgress': 'Page {completed} of {total}',
     'output.ready': 'Ready when you are',
     'output.process': 'Process',
     'output.summary': 'Summary',
@@ -114,6 +116,8 @@ const messages: Record<Locale, Messages> = {
     'errors.unavailable': 'This tool is not available.',
     'errors.operation': 'The operation could not be completed.',
     'errors.preview': 'Unable to preview this PDF.',
+    'errors.fileSize': '{filename} is larger than the 200 MB file limit.',
+    'errors.workspaceSize': 'This selection exceeds the 500 MB workspace limit.',
   },
   de: {
     'a11y.skip': 'Zum Hauptinhalt springen',
@@ -199,6 +203,8 @@ const messages: Record<Locale, Messages> = {
     'preview.empty': 'Diese PDF enthält keine Seiten.',
     'preview.select': 'Seite {page} auswählen',
     'output.processing': '{tool} wird verarbeitet',
+    'output.fileProgress': 'Datei {completed} von {total}',
+    'output.pageProgress': 'Seite {completed} von {total}',
     'output.ready': 'Bereit, wenn du es bist',
     'output.process': 'Verarbeiten',
     'output.summary': 'Zusammenfassung',
@@ -224,6 +230,8 @@ const messages: Record<Locale, Messages> = {
     'errors.unavailable': 'Dieses Werkzeug ist nicht verfügbar.',
     'errors.operation': 'Der Vorgang konnte nicht abgeschlossen werden.',
     'errors.preview': 'Diese PDF konnte nicht in der Vorschau angezeigt werden.',
+    'errors.fileSize': '{filename} überschreitet die Dateigröße von 200 MB.',
+    'errors.workspaceSize': 'Diese Auswahl überschreitet die Arbeitsbereichsgrenze von 500 MB.',
   },
 }
 
