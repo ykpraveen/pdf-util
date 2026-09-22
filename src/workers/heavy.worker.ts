@@ -15,6 +15,30 @@ GlobalWorkerOptions.workerSrc = new URL(
   import.meta.url,
 ).toString()
 
+type OffscreenCanvasEntry = {
+  canvas: OffscreenCanvas | null
+  context: OffscreenCanvasRenderingContext2D | null
+}
+
+class OffscreenCanvasFactory {
+  create(width: number, height: number): OffscreenCanvasEntry {
+    const canvas = new OffscreenCanvas(width, height)
+    return { canvas, context: canvas.getContext('2d') }
+  }
+
+  reset(entry: OffscreenCanvasEntry, width: number, height: number): void {
+    if (!entry.canvas) throw new Error('Canvas is not specified.')
+    entry.canvas.width = width
+    entry.canvas.height = height
+  }
+
+  destroy(entry: OffscreenCanvasEntry): void {
+    if (entry.canvas) entry.canvas.width = entry.canvas.height = 0
+    entry.canvas = null
+    entry.context = null
+  }
+}
+
 function reportProgress(id: number, completed: number, total: number): void {
   const response: HeavyWorkerResponse = { id, type: 'progress', completed, total }
   self.postMessage(response)
@@ -57,7 +81,8 @@ async function renderPage(
 async function compress(id: number, bytes: ArrayBuffer, options: CompressOptions): Promise<ArrayBuffer> {
   const { quality, maxDimension } = normalizeCompressionOptions(options)
   const sourceBytes = new Uint8Array(bytes)
-  const source = await getDocument({ data: sourceBytes }).promise
+  const originalBytes = sourceBytes.slice()
+  const source = await getDocument({ data: sourceBytes, CanvasFactory: OffscreenCanvasFactory }).promise
   const output = await PDFDocument.create()
 
   try {
@@ -88,9 +113,9 @@ async function compress(id: number, bytes: ArrayBuffer, options: CompressOptions
   }
 
   const compressed = await output.save()
-  return compressed.length < sourceBytes.length
+  return compressed.length < originalBytes.length
     ? toArrayBuffer(compressed)
-    : toArrayBuffer(sourceBytes)
+    : toArrayBuffer(originalBytes)
 }
 
 async function ocr(id: number, bytes: ArrayBuffer, language: string): Promise<PageText[]> {

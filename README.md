@@ -1,25 +1,68 @@
-# Vue 3 + TypeScript + Vite
+# Paperwork
 
-This template should help get you started developing with Vue 3 and TypeScript in Vite. The template uses Vue 3 `<script setup>` SFCs, check out the [script setup docs](https://v3.vuejs.org/api/sfc-script-setup.html#sfc-script-setup) to learn more.
+Paperwork is a privacy-first PDF toolkit that runs entirely in the browser. Files are processed on your device and are never uploaded to a backend.
 
-Learn more about the recommended Project Setup and IDE Support in the [Vue Docs TypeScript Guide](https://vuejs.org/guide/typescript/overview.html#project-setup).
+## Features
 
-## Fallow
+- Merge and split PDFs
+- Reorder, rotate, and delete pages
+- Compress PDFs
+- Convert PDFs to images and images to PDFs
+- Set or remove PDF passwords
+- Add text watermarks
+- OCR scanned pages
+- Create offline extractive summaries
+- English and German interface
 
-The pre-commit hook audits changes since `HEAD`:
+## Technology
+
+- Vue 3 and TypeScript
+- Vite
+- Pinia and Vue Router
+- `pdf-lib` and `pdfjs-dist` for PDF operations
+- `qpdf-wasm` for password protection
+- Tesseract.js for client-side OCR
+
+## Local development
+
+Install dependencies and start the Vite development server:
+
+```sh
+npm install
+npm run dev
+```
+
+Other useful commands:
+
+```sh
+npm run test       # Run unit tests
+npm run lint       # Run ESLint
+npm run build      # Type-check and create the production bundle
+npm run preview    # Preview the production bundle locally
+```
+
+## Deployment
+
+The app is a static Vite build and can be deployed to Vercel:
+
+```sh
+npm run build
+```
+
+Deploy the generated `dist/` directory. Keep the headers in [`vercel.json`](vercel.json), which provide the cross-origin isolation required by the qpdf-WASM worker and configure SPA route handling.
+
+## Fallow audit
+
+The repository audits changed files with Fallow. Run the local audit with:
 
 ```sh
 npx fallow audit --changed-since HEAD
 ```
 
-The hook skips this check for the initial commit because no `HEAD` exists yet.
-
-Pull requests audit changes against the main branch:
+Pull requests can audit changes against the main branch:
 
 ```sh
 npx fallow audit --base origin/main
 ```
 
-The generated `.fallow/` cache is ignored.
-
-Installing dependencies with `npm install` configures the Git hook through Husky. To prevent merging a failed check, require the `Fallow / Check` status check in the repository branch protection rules.
+Installing dependencies configures the Git hook through Husky. The generated `.fallow/` cache is ignored.

@@ -16,8 +16,10 @@ function downloadFile(): void {
   const link = document.createElement('a')
   link.href = url
   link.download = props.filename
+  document.body.append(link)
   link.click()
-  URL.revokeObjectURL(url)
+  link.remove()
+  window.setTimeout(() => URL.revokeObjectURL(url), 1000)
 }
 
 function formatSize(bytes: number): string {
