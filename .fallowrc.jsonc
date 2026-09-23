@@ -1,0 +1,5 @@
+{
+  // pdfjs-dist's `getDocument({ BinaryDataFactory })` option constructs the class and
+  // calls `.fetch()` on it reflectively, so no in-repo caller ever references it directly.
+  "usedClassMembers": [{ "implements": "BinaryDataFactoryLike", "members": ["fetch"] }],
+}

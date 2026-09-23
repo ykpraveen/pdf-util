@@ -3,6 +3,7 @@ import type { PDFImage } from 'pdf-lib'
 import type { PDFDocumentProxy } from 'pdfjs-dist'
 import { normalizeCompressionOptions } from './compression'
 import { renderPdfPage } from './render'
+import { pdfWasmUrl } from './wasm-assets'
 
 export type PageRange = {
   start: number
@@ -52,11 +53,25 @@ export async function loadPdf(file: File): Promise<PDFDocument> {
   return PDFDocument.load(bytes)
 }
 
+// pdf-lib's `EncryptedPDFError` doesn't survive `instanceof` checks once compiled (it
+// extends the native `Error`, whose constructor discards the subclass prototype when
+// called via `super(...)`), so callers can't distinguish "encrypted" from "corrupt" by
+// catching it. Re-parsing with `ignoreEncryption` and checking `isEncrypted` does.
+export async function isEncryptedPdf(file: File): Promise<boolean> {
+  try {
+    const bytes = await file.arrayBuffer()
+    const document = await PDFDocument.load(bytes, { ignoreEncryption: true })
+    return document.isEncrypted
+  } catch {
+    return false
+  }
+}
+
 export async function loadPdfJsDoc(file: File): Promise<PDFDocumentProxy> {
   const bytes = new Uint8Array(await file.arrayBuffer())
   const { getDocument } = await getPdfJsModule()
 
-  return getDocument({ data: bytes }).promise
+  return getDocument({ data: bytes, wasmUrl: pdfWasmUrl }).promise
 }
 
 export async function mergePdfs(files: File[]): Promise<Uint8Array> {

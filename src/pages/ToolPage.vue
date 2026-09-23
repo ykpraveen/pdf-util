@@ -11,6 +11,7 @@ import { useFileStore } from '../stores/files'
 import {
   addWatermark,
   imagesToPdf,
+  isEncryptedPdf,
   loadPdf,
   pdfToImages,
   removePassword,
@@ -80,7 +81,11 @@ async function loadPageCount(file: File | null): Promise<void> {
     const document = await loadPdf(file)
     pageCount.value = document.getPageCount()
   } catch {
-    error.value = t('errors.pdfUnreadable')
+    // A file we just password-protected is expected to be unreadable without its
+    // password - that's success, not a failure worth surfacing as an error.
+    if (!(await isEncryptedPdf(file))) {
+      error.value = t('errors.pdfUnreadable')
+    }
   }
 }
 
