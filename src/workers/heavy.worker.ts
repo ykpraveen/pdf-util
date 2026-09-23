@@ -7,6 +7,7 @@ import type { PDFPageProxy } from 'pdfjs-dist'
 import type { Worker as TesseractWorker } from 'tesseract.js'
 import type { CompressOptions } from '../lib/pdf'
 import { normalizeCompressionOptions } from '../lib/pdf/compression'
+import { pdfWasmUrl, WorkerSafeBinaryDataFactory } from '../lib/pdf/wasm-assets'
 import type { PageText } from '../lib/ocr'
 import type { HeavyWorkerRequest, HeavyWorkerResponse } from './heavy.types'
 
@@ -82,7 +83,12 @@ async function compress(id: number, bytes: ArrayBuffer, options: CompressOptions
   const { quality, maxDimension } = normalizeCompressionOptions(options)
   const sourceBytes = new Uint8Array(bytes)
   const originalBytes = sourceBytes.slice()
-  const source = await getDocument({ data: sourceBytes, CanvasFactory: OffscreenCanvasFactory }).promise
+  const source = await getDocument({
+    data: sourceBytes,
+    CanvasFactory: OffscreenCanvasFactory,
+    wasmUrl: pdfWasmUrl,
+    BinaryDataFactory: WorkerSafeBinaryDataFactory,
+  }).promise
   const output = await PDFDocument.create()
 
   try {
@@ -121,7 +127,11 @@ async function compress(id: number, bytes: ArrayBuffer, options: CompressOptions
 async function ocr(id: number, bytes: ArrayBuffer, language: string): Promise<PageText[]> {
   if (!language.trim()) throw new Error('An OCR language is required.')
 
-  const source = await getDocument({ data: new Uint8Array(bytes) }).promise
+  const source = await getDocument({
+    data: new Uint8Array(bytes),
+    wasmUrl: pdfWasmUrl,
+    BinaryDataFactory: WorkerSafeBinaryDataFactory,
+  }).promise
   let worker: TesseractWorker | undefined
   const pages: PageText[] = []
 
