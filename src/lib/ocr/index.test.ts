@@ -11,6 +11,7 @@ vi.mock('tesseract.js', () => ({ createWorker }))
 vi.mock('../pdf', () => ({ loadPdfJsDoc }))
 
 import { ocrPage, ocrPdf } from './index'
+import { OCR_EMPTY_PDF_MESSAGE, OCR_PAGE_FAILURE_TEXT, OCR_UNSUPPORTED_PDF_MESSAGE } from './errors'
 
 describe('OCR helpers', () => {
   beforeEach(() => {
@@ -68,7 +69,7 @@ describe('OCR helpers', () => {
 
   })
 
-  it('cleans up the worker and PDF when recognition fails', async () => {
+  it('reports an unsupported-PDF error when every page fails to recognize', async () => {
     const pageCleanup = vi.fn()
     const pdfCleanup = vi.fn().mockResolvedValue(undefined)
     const canvas = { getContext: vi.fn(() => ({ fillStyle: '', fillRect: vi.fn() })) }
@@ -85,11 +86,58 @@ describe('OCR helpers', () => {
     })
     recognize.mockRejectedValue(new Error('OCR failed'))
 
-    await expect(ocrPdf(new File([], 'sample.pdf'))).rejects.toThrow('OCR failed')
+    await expect(ocrPdf(new File([], 'sample.pdf'))).rejects.toThrow(OCR_UNSUPPORTED_PDF_MESSAGE)
     expect(pageCleanup).toHaveBeenCalledOnce()
     expect(terminate).toHaveBeenCalledOnce()
     expect(pdfCleanup).toHaveBeenCalledOnce()
 
+  })
+
+  it('keeps successful pages and inserts a placeholder for pages that fail to recognize', async () => {
+    const pageCleanup = vi.fn()
+    const pdfCleanup = vi.fn().mockResolvedValue(undefined)
+    const canvas = { getContext: vi.fn(() => ({ fillStyle: '', fillRect: vi.fn() })) }
+
+    vi.stubGlobal('document', { createElement: vi.fn(() => canvas) })
+    loadPdfJsDoc.mockResolvedValue({
+      numPages: 2,
+      getPage: vi.fn().mockResolvedValue({
+        getViewport: vi.fn(() => ({ width: 100, height: 100 })),
+        render: vi.fn(() => ({ promise: Promise.resolve() })),
+        cleanup: pageCleanup,
+      }),
+      cleanup: pdfCleanup,
+    })
+    recognize
+      .mockResolvedValueOnce({ data: { text: 'First page' } })
+      .mockRejectedValueOnce(new Error('OCR failed'))
+
+    await expect(ocrPdf(new File([], 'sample.pdf'))).resolves.toEqual([
+      { pageNumber: 1, text: 'First page' },
+      { pageNumber: 2, text: OCR_PAGE_FAILURE_TEXT },
+    ])
+    expect(pageCleanup).toHaveBeenCalledTimes(2)
+    expect(terminate).toHaveBeenCalledOnce()
+    expect(pdfCleanup).toHaveBeenCalledOnce()
+  })
+
+  it('rejects with a friendly message for a PDF with no pages', async () => {
+    const pdfCleanup = vi.fn().mockResolvedValue(undefined)
+
+    loadPdfJsDoc.mockResolvedValue({ numPages: 0, cleanup: pdfCleanup })
+
+    await expect(ocrPdf(new File([], 'sample.pdf'))).rejects.toThrow(OCR_EMPTY_PDF_MESSAGE)
+    expect(pdfCleanup).toHaveBeenCalledOnce()
+    expect(createWorker).not.toHaveBeenCalled()
+  })
+
+  it('rejects with a friendly message when the PDF itself cannot be loaded', async () => {
+    loadPdfJsDoc.mockRejectedValue(Object.assign(new Error('bad file'), { name: 'InvalidPDFException' }))
+
+    await expect(ocrPdf(new File([], 'sample.pdf'))).rejects.toThrow(
+      "This file isn't a valid PDF and can't be processed for OCR.",
+    )
+    expect(createWorker).not.toHaveBeenCalled()
   })
 
   it('cleans up the PDF when worker initialization fails', async () => {

@@ -3,12 +3,13 @@
 import { PDFDocument } from 'pdf-lib'
 import { getDocument, GlobalWorkerOptions } from 'pdfjs-dist'
 import { createWorker } from 'tesseract.js'
-import type { PDFPageProxy } from 'pdfjs-dist'
+import type { PDFDocumentProxy, PDFPageProxy } from 'pdfjs-dist'
 import type { Worker as TesseractWorker } from 'tesseract.js'
 import type { CompressOptions } from '../lib/pdf'
 import { normalizeCompressionOptions } from '../lib/pdf/compression'
 import { pdfWasmUrl, WorkerSafeBinaryDataFactory } from '../lib/pdf/wasm-assets'
 import type { PageText } from '../lib/ocr'
+import { describeOcrLoadFailure, OCR_EMPTY_PDF_MESSAGE, OCR_PAGE_FAILURE_TEXT, OCR_UNSUPPORTED_PDF_MESSAGE } from '../lib/ocr/errors'
 import type { HeavyWorkerRequest, HeavyWorkerResponse } from './heavy.types'
 
 GlobalWorkerOptions.workerSrc = new URL(
@@ -127,13 +128,26 @@ async function compress(id: number, bytes: ArrayBuffer, options: CompressOptions
 async function ocr(id: number, bytes: ArrayBuffer, language: string): Promise<PageText[]> {
   if (!language.trim()) throw new Error('An OCR language is required.')
 
-  const source = await getDocument({
-    data: new Uint8Array(bytes),
-    wasmUrl: pdfWasmUrl,
-    BinaryDataFactory: WorkerSafeBinaryDataFactory,
-  }).promise
+  let source: PDFDocumentProxy
+
+  try {
+    source = await getDocument({
+      data: new Uint8Array(bytes),
+      wasmUrl: pdfWasmUrl,
+      BinaryDataFactory: WorkerSafeBinaryDataFactory,
+    }).promise
+  } catch (cause) {
+    throw new Error(describeOcrLoadFailure(cause), { cause })
+  }
+
+  if (source.numPages === 0) {
+    await source.cleanup()
+    throw new Error(OCR_EMPTY_PDF_MESSAGE)
+  }
+
   let worker: TesseractWorker | undefined
   const pages: PageText[] = []
+  let failedPages = 0
 
   try {
     worker = await createWorker(language)
@@ -146,11 +160,21 @@ async function ocr(id: number, bytes: ArrayBuffer, language: string): Promise<Pa
         const image = await canvas.convertToBlob({ type: 'image/png' })
         const result = await worker.recognize(image)
         pages.push({ pageNumber, text: result.data.text.trim() })
-        reportProgress(id, pageNumber, source.numPages)
+      } catch (cause) {
+        failedPages += 1
+        pages.push({ pageNumber, text: OCR_PAGE_FAILURE_TEXT })
+        console.error(`OCR failed on page ${pageNumber}:`, cause)
       } finally {
         page.cleanup()
       }
+
+      reportProgress(id, pageNumber, source.numPages)
     }
+
+    // Every page failing means the PDF itself isn't usable for OCR (e.g. an image
+    // codec pdf.js can't decode) rather than a one-off page problem - surface that
+    // as a single clear error instead of a document full of placeholder pages.
+    if (failedPages === source.numPages) throw new Error(OCR_UNSUPPORTED_PDF_MESSAGE)
 
     return pages
   } finally {
