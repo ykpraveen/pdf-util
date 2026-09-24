@@ -58,5 +58,9 @@ const emit = defineEmits<{
   </div>
   <div v-if="tool === 'Summarize'" class="tool-options">
     <label for="summary-sentence-count">{{ t('options.sentences') }} <input id="summary-sentence-count" :value="summarySentenceCount" type="number" min="1" max="20" :aria-label="t('options.sentences')" @input="emit('update:summarySentenceCount', Number(($event.target as HTMLInputElement).value))" /></label>
+    <label class="tool-option-disabled" for="summary-mode-llm" :title="t('options.comingSoon')">
+      {{ t('options.llmSummary') }}
+      <span><input id="summary-mode-llm" type="checkbox" disabled aria-disabled="true" /> <span class="badge-soon">{{ t('options.comingSoon') }}</span></span>
+    </label>
   </div>
 </template>

@@ -184,6 +184,18 @@ textarea {
   background: #fff;
   color: #242622;
 }
+.tool-option-disabled {
+  flex-direction: row !important;
+  align-items: center;
+  gap: 8px !important;
+  cursor: not-allowed;
+}
+.badge-soon {
+  padding: 1px 7px;
+  border: 1px solid currentColor;
+  border-radius: 999px;
+  font-size: 10px;
+}
 .tool-error {
   margin: 0;
   padding: 10px 12px;
