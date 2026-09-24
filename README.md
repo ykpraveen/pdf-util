@@ -1,6 +1,8 @@
 # Paperwork
 
 Paperwork is a privacy-first PDF toolkit that runs entirely in the browser. Files are processed on your device and are never uploaded to a backend.
+Article about the project is available at https://dev.to/ykpraveen/keeping-a-solo-projects-codebase-honest-without-a-team-of-reviewers-4eia
+Deployed version is accessible at https://pdf-util-eta.vercel.app/
 
 ## Features
 
