@@ -21,7 +21,7 @@ import {
   splitPdf,
   type PageRange,
 } from '../lib/pdf'
-import { extractText, summarize } from '../lib/summary'
+import { extractText, summarizePdf } from '../lib/summary'
 import { compressPdfInWorker, mergePdfsInWorker, ocrPdfInWorker } from '../workers/heavy.client'
 import { useI18n } from '../i18n'
 
@@ -190,7 +190,17 @@ async function processOcr(): Promise<void> {
 }
 
 async function processSummary(): Promise<void> {
-  summaryText.value = summarize(await extractText(requirePdf(t('errors.summaryFile'))), summarySentenceCount.value)
+  const file = requirePdf(t('errors.summaryFile'))
+
+  summaryText.value = await summarizePdf(file, summarySentenceCount.value, {
+    extractText,
+    ocrPdfInWorker,
+    onOcrStart: () => { progressDetail.value = t('output.summaryOcrFallback') },
+    onProgress: updateHeavyProgress,
+  })
+
+  if (!summaryText.value.trim()) throw new Error(t('errors.summaryNoText'))
+
   fileStore.publishResults([new File([summaryText.value], 'summary.txt', { type: 'text/plain' })])
 }
 
